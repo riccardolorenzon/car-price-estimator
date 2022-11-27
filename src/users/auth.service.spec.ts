@@ -10,10 +10,21 @@ describe('AuthService', () => {
   let fakeUsersService: Partial<UsersService>;
 
   beforeEach(async () => {
+    const users: User[] = [];
     fakeUsersService = {
-      find: () => Promise.resolve([]),
-      create: (email: string, password: string) =>
-        Promise.resolve({ id: 1, email, password } as User),
+      find: (email: string) => {
+        const filteredUsers = users.filter((user) => user.email == email);
+        return Promise.resolve(filteredUsers);
+      },
+      create: (email: string, password: string) => {
+        const user = {
+          id: Math.floor(Math.random() * 9999999),
+          email: email,
+          password: password,
+        } as User;
+        users.push(user);
+        return Promise.resolve(user);
+      },
     };
 
     const module = await Test.createTestingModule({
@@ -62,15 +73,8 @@ describe('AuthService', () => {
   });
 
   it('returns a user if correct password is provided', async () => {
-    fakeUsersService.find = () =>
-      Promise.resolve([
-        {
-          email: 'a@a.com',
-          password:
-            '986cffe8d8c1377d.45c803c12b25b66d7402a2f9de51fbc9fe42040220bc8d9fb33e9b029a4eb013',
-        } as User,
-      ]);
-    const user = await service.signin('aaa@aa.com', 'kjadsndkjas');
+    await service.signup('john@doe.com', 'asdf');
+    const user = await service.signin('john@doe.com', 'asdf');
     expect(user).toBeDefined();
   });
 });
